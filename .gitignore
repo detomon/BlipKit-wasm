@@ -3,6 +3,9 @@
 *.log
 *.o
 *.trs
+*.wast
+*.wasm.map
+*.wasm.pre
 *~
 .DS_Store
 .deps
