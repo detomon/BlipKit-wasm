@@ -9,7 +9,7 @@ class BlipKitController {
 		this.generatorNode = this.context.createScriptProcessor(numFrames, numChannels, numChannels);
 
 		this.generatorNode.onaudioprocess = (audioProcessingEvent) => {
-			const audioBuffer = this.module._getBuffer();
+			const audioBuffer = this._getBuffer();
 			const inputBuffer = audioProcessingEvent.inputBuffer;
 			const outputBuffer = audioProcessingEvent.outputBuffer;
 
@@ -23,8 +23,19 @@ class BlipKitController {
 			}
 		};
 
-		this.editor = null;
-		this.widgets = [];
+		this.currentEditor = null;
+
+		this.printErr = (line) => {
+			if (this.currentEditor) {
+				this.currentEditor.setError(line);
+			}
+
+			console.error(line);
+		};
+
+		this.print = (line) => {
+			console.log(line);
+		};
 	}
 
 	connectNode() {
@@ -38,124 +49,73 @@ class BlipKitController {
 	}
 
 	generate(length) {
-		return this.module._generate(length);
+		return this._generate(length);
 	}
 
 	heapFloat32Array(array, offset, length) {
-		const memory = this.module.HEAPF32;
+		const memory = this.HEAPF32;
 		const offsetStart = array / memory.BYTES_PER_ELEMENT + offset;
 		const offsetEnd = offsetStart + length;
 
 		return memory.subarray(offsetStart, offsetEnd);
 	}
 
+	startContext() {
+		this._startContext();
+		this.connectNode();
+		console.debug('Context start');
+	}
+
+	stopContext() {
+		this._stopContext();
+
+		// empty remaining audio buffers
+		setTimeout(() => {
+			this.disconnectNode();
+		}, 100);
+
+		console.debug('Context stop');
+	}
+
 	init() {
-		const module = this.module;
-
-		/*setTimeout(() => {
-			this.connectNode();
-		}, 10);*/
-
-		document.querySelector('#start').addEventListener('click', function () {
-			controller.run();
-		});
-
-		document.querySelector('#stop').addEventListener('click', function () {
-			controller.stop();
-		});
 	}
 
-	clearErrors() {
-		const widgets = this.widgets;
+	runSource(editor, sourceCode) {
+		let result = this.ccall('compileSource', null, ['string'], [sourceCode]);
 
-		widgets.forEach((widget) => {
-			widget.clear();
-		});
-
-		widgets.length = 0;
-	}
-
-	createOffsetIndicator(column) {
-		function spliceSplit(str, index, count, add) {
-			var ar = str.split('');
-			ar.splice(index, count, add);
-			return ar.join('');
-		}
-
-		let offsetString = '';
-
-		for (let i = 0; i < column - 1; i++) {
-			offsetString += ' ';
-		}
-
-		offsetString += '^';
-
-		if (column > 3) {
-			offsetString = spliceSplit(offsetString, column - 4, 3, '~~~');
-		}
-		else {
-			offsetString = spliceSplit(offsetString, column, 3, '~~~');
-		}
-
-		return offsetString;
-	}
-
-	setLineError(error, line, column) {
-		const editor = this.editor;
-		const widgets = this.widgets;
-		const offsetString = this.createOffsetIndicator(column);
-
-		let msg = document.createElement('div');
-		msg.appendChild(document.createTextNode(offsetString));
-		msg.appendChild(document.createElement('br'));
-		msg.appendChild(document.createTextNode(error));
-		msg.className = 'line-error';
-		widgets.push(editor.addLineWidget(line - 1, msg, {coverGutter: false, noHScroll: true}));
-
-		editor.scrollIntoView({line: line - 1, char: 0}, 100);
-	}
-
-	setError(line) {
-		let match;
-
-		if ((match = /^(.+) on line (\d+)\:(\d+)$/.exec(line))) {
-			this.setLineError(match[1], match[2], match[3]);
-
-			return true;
-		}
-		else if (!(match = /^User error:/.exec(line))) {
-			this.setLineError(line, 1, 1);
-
-			return true;
-		}
-
-		return false;
-	}
-
-	run() {
-		console.log('run');
-
-		this.clearErrors();
-
-		const source = this.editor.getValue();
-		let result = this.module.ccall('compileSource', null, ['string'], [source]);
+		this.currentEditor = editor;
 
 		if (result === 0) {
-			this.module._startContext();
-
-			//setTimeout(() => {
-				this.connectNode();
-			//}, 100);
-
+			this.startContext();
 		}
 	}
 
 	stop() {
-		this.module._stopContext();
-
-		setTimeout(() => {
-			this.disconnectNode();
-		}, 100);
+		this.stopContext();
 	}
 
+	readyEvent() {
+		this.init();
+		console.debug('Controller ready');
+	}
+
+	doneEvent() {
+		this.stop();
+	}
+
+	lineNumberEvent(trackIdx, lineNumber) {
+		this.currentEditor.setActiveLineNumber(trackIdx, lineNumber)
+	}
+
+	emitEvent(name) {
+		const eventName = name + 'Event';
+		const args = [].slice.call(arguments, 1);
+
+		if (this[eventName]) {
+			this[eventName].apply(this, args);
+		}
+		else {
+			console.warn('Unable to deliver event', eventName, args);
+		}
+	}
 }
