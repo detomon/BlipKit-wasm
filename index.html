@@ -15,13 +15,13 @@
 <body>
 
 <div class="wrapper">
-	<div class="controls-wrapper">
+	<header class="editor-header controls-wrapper">
 		<div class="control" id="file-title">Title</div>
-	</div>
+	</header>
 	<div class="source-wrapper">
 		<textarea class="code-editor" id="source"></textarea>
 	</div>
-	<div class="controls-wrapper">
+	<footer class="controls-wrapper">
 		<div class="control">
 			<button class="button" id="start">Play</button>
 		</div>
@@ -33,7 +33,7 @@
 				<option disabled>Choose file…</option>
 			</select>
 		</div>
-	</div>
+	</footer>
 </div>
 
 <div class="page-loader"></div>
@@ -44,12 +44,13 @@
 <script src="codemirror/addon/fold/brace-fold.js"></script>
 <script src="codemirror/addon/fold/foldgutter.js"></script>
 <script src="codemirror/mode/blip/blip.js"></script>
+<script src="assets/js/vendor/pako_inflate.min.js"></script>
 <script src="assets/js/controller.js"></script>
 <script src="assets/js/source-editor.js"></script>
-<script src="assets/js/main.js"></script>
 <script src="assets/js/player.js"></script>
 <script src="assets/js/files.js"></script>
-<script src="assets/bliplay.js"></script>
+<script src="assets/js/main.js"></script>
+<script src="assets/js/bliplay.js"></script>
 
 </body>
 </html>
