@@ -1,4 +1,4 @@
-window.BlipKit = new BlipKitController();
+window.Bliplay = new BliplayController();
 
 window.addEventListener('load', () => {
 	document.documentElement.classList.add('loaded');
@@ -11,9 +11,14 @@ document.querySelector('#start').addEventListener('click', function () {
 
 	textarea.sourceEditor.reset();
 
-	window.BlipKit.runSource(textarea.sourceEditor, source);
+	document.documentElement.classList.remove('loaded');
+
+	// TODO: wait for readyEvent
+	window.Bliplay.runSource(textarea.sourceEditor, source).finally(() => {
+		document.documentElement.classList.add('loaded');
+	});
 });
 
 document.querySelector('#stop').addEventListener('click', function () {
-	window.BlipKit.stop();
+	window.Bliplay.stopAudio();
 });
