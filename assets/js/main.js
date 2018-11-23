@@ -49,6 +49,18 @@ window.Bliplay = new BliplayController({
 	},
 });
 
+function addURLDataOptions(fileSelect, source) {
+	let seperator = new Option('Other', '');
+	seperator.disabled = true;
+	fileSelect.appendChild(seperator);
+
+	let option = new Option('URL Data', '');
+	option.data = source;
+	fileSelect.appendChild(option);
+
+	fileSelect.selectedIndex = fileSelect.options.length - 1;
+}
+
 const sourceRaw = /^#s=(.*)$/.exec(window.location.hash);
 
 if (sourceRaw) {
@@ -58,6 +70,10 @@ if (sourceRaw) {
 
 	if (source) {
 		setSource(source);
+		addURLDataOptions(fileSelect, source);
+	}
+	else {
+		window.alert('Failed to decode URL data');
 	}
 }
 else {
